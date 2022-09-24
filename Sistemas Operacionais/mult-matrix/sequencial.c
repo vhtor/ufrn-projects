@@ -106,4 +106,8 @@ int main(int argc, char *argv[])
 }
 
 // Shell Script para executar varias vezes
-// for run in {1..10}; do ./main 500 700 700 300; done
+// for run in {1..10}; do ./sequencial 100 100 100 100; done
+// for run in {1..10}; do ./sequencial 200 200 200 200; done
+// for run in {1..10}; do ./sequencial 300 300 300 300; done
+// for run in {1..10}; do ./sequencial 400 400 400 400; done
+// for run in {1..10}; do ./sequencial 500 500 500 500; done

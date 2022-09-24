@@ -4,6 +4,10 @@
 #include <unistd.h>
 #include <sys/time.h>
 
+void leArquivo() {
+  
+}
+
 void imprimeMatriz(int **matriz, int linhas, int colunas) {
   for (int i = 0; i < linhas; i++) {
     for (int j = 0; j < colunas; j++) {
