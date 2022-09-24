@@ -4,7 +4,8 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-void imprimeMatriz(int **matriz, int linhas, int colunas) {
+void imprimeMatriz(int **matriz, int linhas, int colunas) 
+{
   for (int i = 0; i < linhas; i++) {
     for (int j = 0; j < colunas; j++) {
       printf("%d", matriz[i][j]);
@@ -36,16 +37,20 @@ int main(int argc, char *argv[])
   }
 
   // Preenchimento aleatório de matrizes
-  for (int i = 0; i < linhas_A; i++) {
-    for (int j = 0; j < colunas_A; j++) {
+  for (int i = 0; i < linhas_A; i++)
+  {
+    for (int j = 0; j < colunas_A; j++) 
+    {
       matriz_A[i][j] = rand() % 10;
       //printf(" ");
     }
     //printf(" \n");
   }
 
-  for (int i = 0; i < linhas_B; i++) {
-    for (int j = 0; j < colunas_B; j++) {
+  for (int i = 0; i < linhas_B; i++) 
+  {
+    for (int j = 0; j < colunas_B; j++) 
+    {
       matriz_B[i][j] = rand() % 10;
       //printf(" ");
     }
@@ -60,14 +65,16 @@ int main(int argc, char *argv[])
   printf("---------------------------- 2ª Matriz Gerada ---------------------------------\n\n");
   imprimeMatriz(matriz_B, linhas_B, colunas_B); */
  
-  if (colunas_A == linhas_B) {
+  if (colunas_A == linhas_B) 
+  {
     int x;
     // Processamento e saida em tela  =  PRODUTO DAS MATRIZES
     struct timeval stop, start;
     gettimeofday(&start, NULL);
-    for (int i = 0; i < linhas_A; i++) {
-      for (int j = 0; j < colunas_B; j++) {
-
+    for (int i = 0; i < linhas_A; i++) 
+    {
+      for (int j = 0; j < colunas_B; j++) 
+      {
         matriz_C[i][j] = 0;
         for (x = 0; x < linhas_B; x++) {
           aux += matriz_A[i][x] * matriz_B[x][j];
@@ -81,7 +88,8 @@ int main(int argc, char *argv[])
     printf("\nTempo: %lu [ms]\n", time_diff);
   }
 
-  else {
+  else 
+  {
     printf("Digite uma matriz válida para multiplicação: \n");
     printf("O número de colunas da primeira matriz deve ser igual o número de linhas da segunda\n");
     exit(0);
@@ -96,3 +104,6 @@ int main(int argc, char *argv[])
   
   return 0;
 }
+
+// Shell Script para executar varias vezes
+// for run in {1..10}; do ./main 500 700 700 300; done
