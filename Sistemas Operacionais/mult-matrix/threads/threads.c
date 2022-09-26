@@ -6,11 +6,12 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#define MAX_LINE_LENGTH 10
+#define MAX_LINE_LENGTH 50
 
 int **matriz_a, **matriz_b, **matriz_c;
 int linhas_a, colunas_a, linhas_b, colunas_b;
-int fileCtrl, P;
+int P;
+double fileCtrl;
 
 FILE *arquivo_linha_matriz_c;
 
@@ -38,39 +39,34 @@ void leMatriz(FILE *arquivo, int **matriz, int linhas, int colunas) {
   }
 }
 
-void* multMatrix(void* i) 
+void* multMatrix(void* x) 
 {
-  int iterator = (int)(size_t)i;
-  //printf("Sou a thread %d\n", iterator);
-  int aux = 0, *linha_matriz_c;
-  int totalElements = (linhas_a * colunas_b) / fileCtrl;
-  linha_matriz_c = (int *) malloc(sizeof(int) * totalElements);
+  int iterator = (int)(size_t)x;
+  //printf("------------------ Thread [%d] começou ------------------\n", iterator);
+  int acc = 0;
+  int linha_matriz_c[colunas_b];
   
   unsigned long time_diff;
   struct timeval stop, start;
   gettimeofday(&start, NULL);
-  
-  /*  
-  do {
-    for (int j = 0; j < colunas_b; j++) 
-    {
-      for (int x = 0; x < linhas_b; x++) {
-        aux += matriz_a[iterator][x] * matriz_b[x][j];
-      }
-      linha_matriz_c[j] = aux;
-      fprintf(arquivo_linha_matriz_c, "c%d\n", linha_matriz_c[j]);
-      aux = 0;
-      iterator++;
+
+  for (int i = 0; i < linhas_a; i++) {
+    for (int j = 0; j < colunas_b; j++) {
+      acc += matriz_a[iterator][j] * matriz_b[j][i];
     }
-  } while (iterator < fileCtrl);
+    linha_matriz_c[i] = acc;
+    acc = 0;
+  }
+
+  for (int n = 0; n < colunas_b; n++) {
+    fprintf(arquivo_linha_matriz_c, "c%d%d %d\n", iterator+1, n+1, linha_matriz_c[n]);
+  }
+  
   gettimeofday(&stop, NULL);
   time_diff = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start.tv_usec) / 1000.0);
   fprintf(arquivo_linha_matriz_c, "%lu\n", time_diff);
-
-  free(linha_matriz_c);
-  fclose(arquivo_linha_matriz_c); 
+  //printf("------------------ Thread [%d] terminou ------------------\n", iterator);
   pthread_exit(NULL);
-  */
 }
 
 int main(int argc, char *argv[]) 
@@ -97,17 +93,17 @@ int main(int argc, char *argv[])
   // Alocando as matrizes
   matriz_a = malloc(sizeof(int *) * linhas_a);
   for (int i = 0; i < linhas_a; i++) {
-    matriz_a[i] = malloc(sizeof(int *) * colunas_a);
+    matriz_a[i] = (int*) malloc(sizeof(int) * colunas_a);
   }
 
   matriz_b = malloc(sizeof(int *) * linhas_b);
   for (int i = 0; i < linhas_b; i++) {
-    matriz_b[i] = malloc(sizeof(int *) * colunas_b);
+    matriz_b[i] = (int*) malloc(sizeof(int) * colunas_b);
   }
 
   matriz_c = malloc(sizeof(int *) * linhas_a);
   for (int i = 0; i < linhas_a; i++) {
-    matriz_c[i] = malloc(sizeof(int *) * colunas_b);
+    matriz_c[i] = (int*) malloc(sizeof(int) * colunas_b);
   }
 
   leMatriz(arquivo_matriz_a, matriz_a, linhas_a, colunas_a);
@@ -117,65 +113,32 @@ int main(int argc, char *argv[])
 
   P = atoi(argv[3]);
   pthread_t tid[P];
-  
-  fileCtrl = (int) ceil((linhas_a * colunas_b) / P);
-  for(int i = 1; i <= fileCtrl; i++) 
-  {
-    // Criando o arquivo (Ai * Bj) / P vezes
-    char filename[25];
-    sprintf(filename, "output/linha_%d_matriz_c", i);
-    
-    if ((arquivo_linha_matriz_c = fopen(filename, "w")) == NULL) {
-      printf("Erro! O arquivo 1 não pôde ser aberto.");
-      exit(1);
-    }
-    fprintf(arquivo_linha_matriz_c, "%d %d\n", linhas_a, colunas_b);
 
-    for (int j = 0; j < P; j++) {
-      pthread_create(&tid[j], NULL, multMatrix, (void *)(size_t)j);
-    }
-  }  
-
-  /*
-  int aux = 0;
-  unsigned long time_diff;
   if (colunas_a == linhas_b) 
   {
-    int x;
-    // Processamento e saida em tela  =  PRODUTO DAS MATRIZES
-    struct timeval stop, start;
-    gettimeofday(&start, NULL);
-    for (int i = 0; i < linhas_a; i++) 
+    struct timeval fim, inicio;
+    gettimeofday(&inicio, NULL);
+    for (int j = 0; j < P; j++) 
     {
-      for (int j = 0; j < colunas_b; j++) 
-      {
-        matriz_c[i][j] = 0;
-        for (x = 0; x < linhas_b; x++) {
-          aux += matriz_a[i][x] * matriz_b[x][j];
-        }
-        matriz_c[i][j] = aux;
-        aux = 0;
+      char filename[25];
+      sprintf(filename, "output/linha_%d_matriz_c", j+1);
+
+      if ((arquivo_linha_matriz_c = fopen(filename, "w")) == NULL) {
+        printf("Erro! O arquivo 1 não pôde ser aberto.");
+        exit(1);
       }
-    }
-    gettimeofday(&stop, NULL);
-    time_diff = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start.tv_usec) / 1000.0);
-    printf("Tempo: %lu [ms]\n", time_diff);
-    
-    if ((arquivo_matriz_c = fopen("matriz_c.txt", "w")) == NULL) 
-    {
-      printf("Erro! O arquivo 3 não pôde ser aberto.");
-      exit(1);
+
+      fprintf(arquivo_linha_matriz_c, "%d %d\n", linhas_a, colunas_b);
+      pthread_create(&tid[j], NULL, multMatrix, (void *)(size_t)j);
     }
 
-    fprintf(arquivo_matriz_c, "%d %d\n", linhas_a, colunas_b);
-    for (int i = 0; i < linhas_a; i++) {
-      for (int j = 0; j < colunas_b; j++) 
-      {
-        fprintf(arquivo_matriz_c, "c%d%d ", i+1, j+1);
-        fprintf(arquivo_matriz_c,"%d \n", matriz_c[i][j]);
-      }
+    for (int j = 0; j < P; j++) {
+      pthread_join(tid[j], NULL);
     }
-    fprintf(arquivo_matriz_c, "%lu\n", time_diff);
+
+    gettimeofday(&fim, NULL);
+    unsigned long time_diff = ((fim.tv_sec - inicio.tv_sec) * 1000) + ((fim.tv_usec - inicio.tv_usec) / 1000.0);
+    printf("Tempo: %lu [ms]\n", time_diff);
 
     // Liberando as memórias das matrizes
     for (int i = 0; i < linhas_a; i++) free(matriz_a[i]);
@@ -186,19 +149,23 @@ int main(int argc, char *argv[])
 
     for (int i = 0; i < linhas_a; i++) free(matriz_c[i]);
     free(matriz_c);
+    
+    fclose(arquivo_linha_matriz_c);
   }
-
+  
   else 
   {
     printf("Digite uma matriz válida para multiplicação: \n");
     printf("O número de colunas da primeira matriz deve ser igual o número de linhas da segunda\n");
     exit(0);
   } 
-  */
-
+  
   return 0;
 }
 
-// Shell Script para executar varias vezes
-// Matriz 3200x3200 leva em média 205567ms para multiplicar
-// for run in {1..10}; do ./threads matriz_a.txt matriz_b.txt 3; done
+// Scripts
+
+// Remover todos os arquivos de linhas gerados: rm output/*
+// Gerar matrizes ./auxiliar m n m n
+// Executar o programa de threads ./threads matriz_a.txt matriz_b.txt P
+// for run in {1..10}; do ./threads matriz_a.txt matriz_b.txt P; done
